@@ -1,6 +1,7 @@
 import pygame
 from tkinter import *
 from tkinter import messagebox as MessageBox
+from random import randint
 
 HEIGHT = 480
 WIDTH = 640
@@ -12,13 +13,15 @@ pygame.display.set_caption("bola con colisiones")
 
 ball = pygame.image.load("./img/ball.png")
 ballrect = ball.get_rect()
-#speed = [1,1]
-speed = [4.5,4.5]
+speed = [randint(3,6),randint(3,6)]
+#speed = [4.5,4.5]
 ballrect.move_ip(0,0)
 
 platform = pygame.image.load("./img/platform.png")
 platformrect = platform.get_rect()
 platformrect.move_ip(240,450)
+
+fuente = pygame.font.Font(None, 36)
 
 run = True
 
@@ -47,11 +50,18 @@ while run:
     if ballrect.left < 0 or ballrect.right > window.get_width():
         speed[0] = -speed[0]
             
-    if ballrect.top < 0 or ballrect.bottom > window.get_height():
+    if ballrect.top < 0:
         speed[1] = -speed[1]
     
     if ballrect.bottom >= window.get_height():
-        if MessageBox.askretrycancel("Game Over"):
+        
+        texto = fuente.render("Game Over", True, (125,125,125))
+        textorect = texto.get_rect()
+        textoX = window.get_width()/2 - textorect.width/2
+        textoY = window.get_height()/2 - textorect.height/2
+        window.blit(texto, [textoX, textoY])
+    
+        """if MessageBox.askretrycancel("Game Over"):
             platformrect = platform.get_rect()  
             platformrect.move_ip(window.get_width()/2, window.get_height() - 30)
             
@@ -59,11 +69,14 @@ while run:
             ballrect.move_ip(0,0)
             speed = [4.5,4.5]
         else:
-            run = False
+            run = False"""
     
-    window.fill((255,255,255))
-    window.blit(ball, ballrect)
-    window.blit(platform, platformrect)
+    else:
+        window.fill((255,255,255))
+        window.blit(ball, ballrect)
+        window.blit(platform, platformrect)
+    
+    
     pygame.display.flip()
     pygame.time.Clock().tick(60)
     
