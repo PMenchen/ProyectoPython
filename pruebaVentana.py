@@ -2,13 +2,17 @@ import pygame
 from tkinter import *
 from tkinter import messagebox as MessageBox
 
+HEIGHT = 480
+WIDTH = 640
+
 pygame.init()
 
-window = pygame.display.set_mode((640,480), pygame.RESIZABLE)
+window = pygame.display.set_mode((WIDTH,HEIGHT))#, pygame.RESIZABLE)
 pygame.display.set_caption("bola con colisiones")
 
 ball = pygame.image.load("./img/ball.png")
 ballrect = ball.get_rect()
+#speed = [1,1]
 speed = [4.5,4.5]
 ballrect.move_ip(0,0)
 
@@ -22,11 +26,12 @@ while run:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
-        if event.type == pygame.VIDEORESIZE:
+        """if event.type == pygame.VIDEORESIZE:
             platformrect = platform.get_rect()  
             platformrect.move_ip(window.get_width()/2, window.get_height() - 30)
-            #comprobar posición y calcular con respecto al tamaño de la ventana
-            ballrect.move_ip((ballrect.x*100)/window.get_width(), (ballrect.y*100)/window.get_height())
+            
+            ballrect.x = (ballrect.x*100)/window.get_width()
+            ballrect.y = (ballrect.y*100)/window.get_height()"""
     
     keys = pygame.key.get_pressed()
     if keys[pygame.K_LEFT] and not(platformrect.left < 0):
