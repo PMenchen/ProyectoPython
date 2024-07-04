@@ -870,7 +870,7 @@ while ejecutando:
 # Mostrar la pantalla de fin
 pantalla_fin()
 
-pygame.quit()"""
+pygame.quit()
 
 import pygame
 import random
@@ -896,14 +896,14 @@ FPS = 60
 fuente = pygame.font.SysFont('Arial', 25)
 
 # Cargar música de fondo
-pygame.mixer.music.load('background_music.mp3')
-pygame.mixer.music.play(-1)
+#pygame.mixer.music.load('background_music.mp3')
+#pygame.mixer.music.play(-1)
 
 # Cargar efectos de sonido
-sonido_disparo = pygame.mixer.Sound('shoot.wav')
-sonido_golpe = pygame.mixer.Sound('hit.wav')
-sonido_potenciador = pygame.mixer.Sound('powerup.wav')
-sonido_game_over = pygame.mixer.Sound('game_over.wav')
+sonido_disparo = pygame.mixer.Sound('audio/shoot.wav')
+sonido_golpe = pygame.mixer.Sound('audio/hit.wav')
+sonido_potenciador = pygame.mixer.Sound('audio/powerup.wav')
+sonido_game_over = pygame.mixer.Sound('audio/game_over.wav')
 
 # Función para cargar la spritesheet
 def cargar_spritesheet(archivo):
@@ -917,7 +917,7 @@ def obtener_sprite(hoja, x, y, ancho, alto):
     return sprite
 
 # Cargar spritesheet
-spritesheet = cargar_spritesheet('/mnt/data/spritesheet.png')
+spritesheet = cargar_spritesheet('sprites/spritesheet.png')
 
 # Definir sprites individuales basados en las posiciones de la hoja de sprites original
 sprites = {
@@ -1220,4 +1220,5 @@ while ejecutando:
 # Mostrar la pantalla de fin
 pantalla_fin()
 
-pygame.quit()
+pygame.quit()"""
+
