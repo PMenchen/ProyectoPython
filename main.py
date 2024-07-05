@@ -925,7 +925,7 @@ sprites = {
     'enemy_basic': [obtener_sprite(spritesheet, 224, 64, 16, 16), obtener_sprite(spritesheet, 240, 64, 16, 16)],
     'enemy_fast': [obtener_sprite(spritesheet, 255, 64, 16, 16), obtener_sprite(spritesheet, 272, 64, 16, 16)],
     'enemy_strong': [obtener_sprite(spritesheet, 287, 64, 16, 16), obtener_sprite(spritesheet, 303, 64, 16, 16)],
-    'boss': [obtener_sprite(spritesheet, 128, 0, 32, 32)],  # Suponiendo que el boss es un sprite más grande
+    'boss': [obtener_sprite(spritesheet, 191, 144, 16, 16),obtener_sprite(spritesheet, 208, 144, 16, 16),obtener_sprite(spritesheet, 223, 144, 16, 16),obtener_sprite(spritesheet, 241, 144, 16, 16)],  # Suponiendo que el boss es un sprite más grande
     'bullet': obtener_sprite(spritesheet, 394, 112, 5, 5),
     'powerup_speed': obtener_sprite(spritesheet, 241, 162, 12, 12),
     'powerup_live': obtener_sprite(spritesheet, 272, 163, 14, 11),
@@ -1012,6 +1012,8 @@ class Jefe(pygame.sprite.Sprite):
         self.rect.center = (ANCHO // 2, -self.rect.height)
         self.velocidad_y = 1
         self.vida = 10
+        self.animacion = 0
+        self.contador_animacion = 0
 
     def update(self):
         self.rect.y += self.velocidad_y
@@ -1068,6 +1070,9 @@ potenciadores = pygame.sprite.Group()
 # Crear instancia del jugador
 jugador = Jugador()
 todos_los_sprites.add(jugador)
+
+jefe = Jefe()
+todos_los_sprites.add(jefe)
 
 # Función para crear enemigos
 def crear_enemigos(n):
@@ -1160,7 +1165,31 @@ while ejecutando:
                     todos_los_sprites.add(bala)
                     balas.add(bala)
                 sonido_disparo.play()"""
-
+    
+    #MANTENER PULSADO EL BOTÓN DE DISPARAR
+    """keys = pygame.key.get_pressed()
+    if keys[pygame.K_DOWN]:
+        bala = Bala(jugador.rect.centerx, jugador.rect.centery, 'down')
+        todos_los_sprites.add(bala)
+        balas.add(bala)
+        sonido_disparo.play()
+    if keys[pygame.K_UP]:
+        bala = Bala(jugador.rect.centerx, jugador.rect.centery, 'up')
+        todos_los_sprites.add(bala)
+        balas.add(bala)
+        sonido_disparo.play()
+    if keys[pygame.K_RIGHT]:
+        bala = Bala(jugador.rect.centerx, jugador.rect.centery, 'right')
+        todos_los_sprites.add(bala)
+        balas.add(bala)
+        sonido_disparo.play()
+    if keys[pygame.K_LEFT]:
+        bala = Bala(jugador.rect.centerx, jugador.rect.centery, 'left')
+        todos_los_sprites.add(bala)
+        balas.add(bala)
+        sonido_disparo.play()"""
+        
+    
     # Actualizar
     todos_los_sprites.update()
 
@@ -1175,14 +1204,14 @@ while ejecutando:
             potenciadores.add(potenciador)
         sonido_golpe.play()
 
-    """colisiones_boss = pygame.sprite.spritecollide(jugador, balas, False, pygame.sprite.collide_mask)
+    colisiones_boss = pygame.sprite.spritecollide(jefe, balas, False, pygame.sprite.collide_mask)
     for colision in colisiones_boss:
-        colision.vida -= 1
-        if colision.vida <= 0:
-            colision.kill()
+        jefe.vida -= 1
+        if jefe.vida <= 0:
+            jefe.kill()
             jefe_activo = False
             nivel += 1
-            oleada = 1"""
+            oleada = 1
 
     #COLISIÓN DEL JUGADOR CON LOS ENEMIGOS
     if pygame.sprite.spritecollideany(jugador, enemigos):
