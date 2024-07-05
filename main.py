@@ -870,7 +870,7 @@ while ejecutando:
 # Mostrar la pantalla de fin
 pantalla_fin()
 
-pygame.quit()
+pygame.quit()"""
 
 import pygame
 import random
@@ -921,14 +921,15 @@ spritesheet = cargar_spritesheet('sprites/spritesheet.png')
 
 # Definir sprites individuales basados en las posiciones de la hoja de sprites original
 sprites = {
-    'player': [obtener_sprite(spritesheet, 0, 0, 16, 16), obtener_sprite(spritesheet, 16, 0, 16, 16)],
-    'enemy_basic': [obtener_sprite(spritesheet, 32, 0, 16, 16), obtener_sprite(spritesheet, 48, 0, 16, 16)],
-    'enemy_fast': [obtener_sprite(spritesheet, 64, 0, 16, 16), obtener_sprite(spritesheet, 80, 0, 16, 16)],
-    'enemy_strong': [obtener_sprite(spritesheet, 96, 0, 16, 16), obtener_sprite(spritesheet, 112, 0, 16, 16)],
+    'player': [obtener_sprite(spritesheet, 367, 112, 16, 16)],#, obtener_sprite(spritesheet, 16, 0, 16, 16)
+    'enemy_basic': [obtener_sprite(spritesheet, 224, 64, 16, 16), obtener_sprite(spritesheet, 240, 64, 16, 16)],
+    'enemy_fast': [obtener_sprite(spritesheet, 255, 64, 16, 16), obtener_sprite(spritesheet, 272, 64, 16, 16)],
+    'enemy_strong': [obtener_sprite(spritesheet, 287, 64, 16, 16), obtener_sprite(spritesheet, 303, 64, 16, 16)],
     'boss': [obtener_sprite(spritesheet, 128, 0, 32, 32)],  # Suponiendo que el boss es un sprite más grande
-    'bullet': obtener_sprite(spritesheet, 160, 0, 8, 8),
-    'powerup_speed': obtener_sprite(spritesheet, 176, 0, 16, 16),
-    'powerup_shield': obtener_sprite(spritesheet, 192, 0, 16, 16),
+    'bullet': obtener_sprite(spritesheet, 394, 112, 5, 5),
+    'powerup_speed': obtener_sprite(spritesheet, 241, 162, 12, 12),
+    'powerup_live': obtener_sprite(spritesheet, 272, 163, 14, 11),
+    'powerup_live': obtener_sprite(spritesheet, 272, 163, 14, 11),
 }
 
 class Jugador(pygame.sprite.Sprite):
@@ -938,7 +939,7 @@ class Jugador(pygame.sprite.Sprite):
         self.image = self.sprites[0]
         self.rect = self.image.get_rect()
         self.rect.center = (ANCHO // 2, ALTO // 2)
-        self.velocidad = 5
+        self.velocidad = 3
         self.puntuacion = 0
         self.vidas = 3
         self.animacion = 0
@@ -948,13 +949,13 @@ class Jugador(pygame.sprite.Sprite):
 
     def update(self):
         keys = pygame.key.get_pressed()
-        if keys[pygame.K_LEFT]:
+        if keys[pygame.K_a]:
             self.rect.x -= self.velocidad
-        if keys[pygame.K_RIGHT]:
+        if keys[pygame.K_d]:
             self.rect.x += self.velocidad
-        if keys[pygame.K_UP]:
+        if keys[pygame.K_w]:
             self.rect.y -= self.velocidad
-        if keys[pygame.K_DOWN]:
+        if keys[pygame.K_s]:
             self.rect.y += self.velocidad
 
         if self.rect.left < 0:
@@ -1032,7 +1033,7 @@ class Bala(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.center = (x, y)
         self.direccion = direccion
-        self.velocidad = 10
+        self.velocidad = 5
 
     def update(self):
         if self.direccion == 'up':
@@ -1091,8 +1092,8 @@ def pantalla_inicio():
                 if evento.key == pygame.K_RETURN:
                     inicio = False
 
-        VENTANA.fill(NEGRO)
-        mensaje_inicio = fuente.render("Pulsa ENTER para empezar", True, BLANCO)
+        VENTANA.fill(BLANCO)
+        mensaje_inicio = fuente.render("Pulsa ENTER para empezar", True, NEGRO)
         VENTANA.blit(mensaje_inicio, (ANCHO // 2 - mensaje_inicio.get_width() // 2, ALTO // 2 - mensaje_inicio.get_height() // 2))
         pygame.display.flip()
         reloj.tick(FPS)
@@ -1109,8 +1110,8 @@ def pantalla_fin():
                 if evento.key == pygame.K_RETURN:
                     fin = False
 
-        VENTANA.fill(NEGRO)
-        mensaje_fin = fuente.render("Game Over - Pulsa ENTER para reiniciar", True, BLANCO)
+        VENTANA.fill(BLANCO)
+        mensaje_fin = fuente.render("Game Over - Pulsa ENTER para reiniciar", True, NEGRO)
         VENTANA.blit(mensaje_fin, (ANCHO // 2 - mensaje_fin.get_width() // 2, ALTO // 2 - mensaje_fin.get_height() // 2))
         pygame.display.flip()
         reloj.tick(FPS)
@@ -1131,13 +1132,34 @@ while ejecutando:
         if evento.type == pygame.QUIT:
             ejecutando = False
         elif evento.type == pygame.KEYDOWN:
-            if evento.key == pygame.K_SPACE:
+            if evento.key == pygame.K_UP:
+                bala = Bala(jugador.rect.centerx, jugador.rect.centery, 'up')
+                todos_los_sprites.add(bala)
+                balas.add(bala)
+                sonido_disparo.play()
+            if evento.key == pygame.K_DOWN:
+                bala = Bala(jugador.rect.centerx, jugador.rect.centery, 'down')
+                todos_los_sprites.add(bala)
+                balas.add(bala)
+                sonido_disparo.play()
+            if evento.key == pygame.K_RIGHT:
+                bala = Bala(jugador.rect.centerx, jugador.rect.centery, 'right')
+                todos_los_sprites.add(bala)
+                balas.add(bala)
+                sonido_disparo.play()
+            if evento.key == pygame.K_LEFT:
+                bala = Bala(jugador.rect.centerx, jugador.rect.centery, 'left')
+                todos_los_sprites.add(bala)
+                balas.add(bala)
+                sonido_disparo.play()
+                
+            """if evento.key == pygame.K_SPACE:
                 direcciones = ['up', 'down', 'left', 'right']
                 for direccion in direcciones:
                     bala = Bala(jugador.rect.centerx, jugador.rect.centery, direccion)
                     todos_los_sprites.add(bala)
                     balas.add(bala)
-                sonido_disparo.play()
+                sonido_disparo.play()"""
 
     # Actualizar
     todos_los_sprites.update()
@@ -1147,21 +1169,22 @@ while ejecutando:
     for colision in colisiones_enemigos:
         jugador.puntuacion += 10
         if random.random() < 0.1:  # 10% de probabilidad de que aparezca un potenciador
-            tipo_potenciador = random.choice(['speed', 'shield'])
+            tipo_potenciador = random.choice(['speed', 'live'])
             potenciador = Potenciador(colision.rect.x, colision.rect.y, tipo_potenciador)
             todos_los_sprites.add(potenciador)
             potenciadores.add(potenciador)
         sonido_golpe.play()
 
-    colisiones_boss = pygame.sprite.spritecollide(jugador, balas, False, pygame.sprite.collide_mask)
+    """colisiones_boss = pygame.sprite.spritecollide(jugador, balas, False, pygame.sprite.collide_mask)
     for colision in colisiones_boss:
         colision.vida -= 1
         if colision.vida <= 0:
             colision.kill()
             jefe_activo = False
             nivel += 1
-            oleada = 1
+            oleada = 1"""
 
+    #COLISIÓN DEL JUGADOR CON LOS ENEMIGOS
     if pygame.sprite.spritecollideany(jugador, enemigos):
         jugador.vidas -= 1
         if jugador.vidas <= 0:
@@ -1172,6 +1195,7 @@ while ejecutando:
                 enemigo.kill()
             crear_enemigos(enemigos_por_oleada)
 
+    #EFECTOS DISTINTOS POTENCIADORES AL COLISIONAR EL JUGADOR CON ELLOS
     colisiones_potenciadores = pygame.sprite.spritecollide(jugador, potenciadores, True)
     for colision in colisiones_potenciadores:
         sonido_potenciador.play()
@@ -1179,7 +1203,7 @@ while ejecutando:
             jugador.velocidad *= 2
             jugador.potenciador_activo = True
             jugador.potenciador_tiempo = pygame.time.get_ticks()
-        elif colision.tipo == 'shield':
+        elif colision.tipo == 'live':
             jugador.vidas += 1
 
     # Subir de nivel cada 3 oleadas
@@ -1194,21 +1218,21 @@ while ejecutando:
             enemigos_por_oleada += 2
 
     # Dibujar / renderizar
-    VENTANA.fill(NEGRO)
+    VENTANA.fill(BLANCO)
     todos_los_sprites.draw(VENTANA)
 
     # Dibujar la puntuación, nivel y vidas
-    texto_puntuacion = fuente.render(f'Puntuación: {jugador.puntuacion}', True, BLANCO)
+    texto_puntuacion = fuente.render(f'Puntuación: {jugador.puntuacion}', True, NEGRO)
     VENTANA.blit(texto_puntuacion, (10, 10))
-    texto_nivel = fuente.render(f'Nivel: {nivel}', True, BLANCO)
+    texto_nivel = fuente.render(f'Nivel: {nivel}', True, NEGRO)
     VENTANA.blit(texto_nivel, (10, 40))
-    texto_vidas = fuente.render(f'Vidas: {jugador.vidas}', True, BLANCO)
+    texto_vidas = fuente.render(f'Vidas: {jugador.vidas}', True, NEGRO)
     VENTANA.blit(texto_vidas, (10, 70))
 
     # Dibujar tiempo restante del potenciador si está activo
     if jugador.potenciador_activo:
         tiempo_restante = 5 - (pygame.time.get_ticks() - jugador.potenciador_tiempo) // 1000
-        texto_potenciador = fuente.render(f'Tiempo Potenciador: {tiempo_restante}', True, BLANCO)
+        texto_potenciador = fuente.render(f'Tiempo Potenciador: {tiempo_restante}', True, NEGRO)
         VENTANA.blit(texto_potenciador, (10, 100))
 
     # Después de dibujar todo, actualizar la pantalla
@@ -1220,5 +1244,5 @@ while ejecutando:
 # Mostrar la pantalla de fin
 pantalla_fin()
 
-pygame.quit()"""
+pygame.quit()
 
