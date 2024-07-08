@@ -1204,14 +1204,15 @@ while ejecutando:
             potenciadores.add(potenciador)
         sonido_golpe.play()
 
-    colisiones_boss = pygame.sprite.spritecollide(jefe, balas, False, pygame.sprite.collide_mask)
+    colisiones_boss = pygame.sprite.spritecollide(jefe, balas, True, pygame.sprite.collide_mask)
     for colision in colisiones_boss:
         jefe.vida -= 1
-        if jefe.vida <= 0:
+        if jefe.vida == 0:
             jefe.kill()
             jefe_activo = False
             nivel += 1
             oleada = 1
+            break
 
     #COLISIÓN DEL JUGADOR CON LOS ENEMIGOS
     if pygame.sprite.spritecollideany(jugador, enemigos):
