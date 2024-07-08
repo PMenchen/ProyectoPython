@@ -874,6 +874,8 @@ pygame.quit()"""
 
 import pygame
 import random
+import os
+import json
 
 # Inicializar Pygame
 pygame.init()
@@ -887,6 +889,9 @@ pygame.display.set_caption("Journey of the Prairie King")
 # Colores
 NEGRO = (0, 0, 0)
 BLANCO = (255, 255, 255)
+ROJO = (255, 0, 0)
+VERDE = (0, 255, 0)
+AZUL = (0, 0, 255)
 
 # Reloj para controlar los FPS
 reloj = pygame.time.Clock()
@@ -930,7 +935,47 @@ sprites = {
     'powerup_speed': obtener_sprite(spritesheet, 241, 162, 12, 12),
     'powerup_live': obtener_sprite(spritesheet, 272, 163, 14, 11),
     'powerup_live': obtener_sprite(spritesheet, 272, 163, 14, 11),
+    'powerup_multishot': obtener_sprite(spritesheet, 191, 160, 16, 16),
+    'powerup_explosive': obtener_sprite(spritesheet, 208, 160, 15, 16),
+    'tile_grass': obtener_sprite(spritesheet, 383, 0, 16, 16),
+    'tile_dirt': obtener_sprite(spritesheet, 399, 0, 16, 16),
+    'tile_water': obtener_sprite(spritesheet, 463, 0, 16, 16),
+    'tile_sand': obtener_sprite(spritesheet, 399, 32, 16, 16),
+    'obstacle': obtener_sprite(spritesheet, 447, 0, 16, 16)
 }
+
+# Función para guardar altas puntuaciones
+def guardar_alta_puntuacion(puntuacion):
+    archivo_puntuaciones = 'altas_puntuaciones.json'
+    if os.path.exists(archivo_puntuaciones):
+        with open(archivo_puntuaciones, 'r') as archivo:
+            puntuaciones = json.load(archivo)
+    else:
+        puntuaciones = []
+
+    puntuaciones.append(puntuacion)
+    puntuaciones = sorted(puntuaciones, reverse=True)[:5]  # Guardar solo las 5 más altas
+
+    with open(archivo_puntuaciones, 'w') as archivo:
+        json.dump(puntuaciones, archivo)
+
+# Función para mostrar altas puntuaciones
+def mostrar_altas_puntuaciones():
+    archivo_puntuaciones = 'altas_puntuaciones.json'
+    if os.path.exists(archivo_puntuaciones):
+        with open(archivo_puntuaciones, 'r') as archivo:
+            puntuaciones = json.load(archivo)
+    else:
+        puntuaciones = []
+
+    VENTANA.fill(BLANCO)
+    titulo = fuente.render("Altas Puntuaciones", True, NEGRO)
+    VENTANA.blit(titulo, (ANCHO // 2 - titulo.get_width() // 2, 50))
+    for i, puntuacion in enumerate(puntuaciones):
+        texto = fuente.render(f"{i + 1}. {puntuacion}", True, NEGRO)
+        VENTANA.blit(texto, (ANCHO // 2 - texto.get_width() // 2, 100 + i * 30))
+    pygame.display.update()
+    pygame.time.wait(3000)
 
 class Jugador(pygame.sprite.Sprite):
     def __init__(self):
@@ -946,6 +991,7 @@ class Jugador(pygame.sprite.Sprite):
         self.contador_animacion = 0
         self.potenciador_activo = False
         self.potenciador_tiempo = 0
+        self.multishot_activo = False
 
     def update(self):
         keys = pygame.key.get_pressed()
@@ -988,11 +1034,15 @@ class Enemigo(pygame.sprite.Sprite):
         self.rect.x = random.randrange(ANCHO - self.rect.width)
         self.rect.y = random.randrange(-100, -40)
         self.velocidad_y = random.randrange(1, 4) if tipo != 'fast' else random.randrange(4, 7)
+        self.velocidad_x = random.choice([-2, 2]) if tipo == 'strong' else 0
         self.animacion = 0
         self.contador_animacion = 0
 
     def update(self):
         self.rect.y += self.velocidad_y
+        self.rect.x += self.velocidad_x
+        if self.rect.left < 0 or self.rect.right > ANCHO:
+            self.velocidad_x *= -1
         if self.rect.top > ALTO:
             self.rect.x = random.randrange(ANCHO - self.rect.width)
             self.rect.y = random.randrange(-100, -40)
@@ -1061,11 +1111,71 @@ class Potenciador(pygame.sprite.Sprite):
     def update(self):
         pass
 
+class Obstaculo(pygame.sprite.Sprite):
+    def __init__(self, x, y, ancho, alto):
+        super().__init__()
+        self.image = pygame.Surface((ancho, alto), pygame.SRCALPHA)
+        self.rect = self.image.get_rect()
+        self.rect.topleft = (x, y)
+        self.image.blit(sprites['obstacle'], (0, 0))
+class Mapa:
+    def __init__(self, nivel):
+        self.tiles = []
+        self.cargar_mapa(nivel)
+
+    def cargar_mapa(self, nivel):
+        niveles = {
+            1: [
+                "gggggggggggggggggggg",
+                "gddddggggddddddggggg",
+                "gddddggggddddddggggg",
+                "gggggggggggggggggggg",
+                "ggggggwwgggggggggggg",
+                "ggggggwwgggggggggggg",
+                "gggggggggggggggggggg",
+                "gggggggggggggggggggg",
+                "gggggssswwssssssgggg",
+                "gggggssswwssssssgggg"
+            ],
+            2: [
+                "ssssssggggssssswwwww",
+                "ssssssggggssssswwwww",
+                "ssssssggggssssswwwww",
+                "wwwwwwggggwwwwwwwwww",
+                "wwwwwwggggwwwwwwwwww",
+                "gggggggggggggggggggg",
+                "gggggggggggggggggggg",
+                "ddddddggggdddddddddd",
+                "ddddddggggdddddddddd",
+                "ddddddggggdddddddddd"
+            ]
+        }
+
+        mapa_nivel = niveles[nivel]
+        for fila in mapa_nivel:
+            fila_tiles = []
+            for tile in fila:
+                if tile == "g":
+                    fila_tiles.append(sprites['tile_grass'])
+                elif tile == "d":
+                    fila_tiles.append(sprites['tile_dirt'])
+                elif tile == "w":
+                    fila_tiles.append(sprites['tile_water'])
+                elif tile == "s":
+                    fila_tiles.append(sprites['tile_sand'])
+            self.tiles.append(fila_tiles)
+
+    def dibujar(self):
+        for y, fila in enumerate(self.tiles):
+            for x, tile in enumerate(fila):
+                VENTANA.blit(tile, (x * 32, y * 32))
+
 # Crear grupos de sprites
 todos_los_sprites = pygame.sprite.Group()
 enemigos = pygame.sprite.Group()
 balas = pygame.sprite.Group()
 potenciadores = pygame.sprite.Group()
+obstaculos = pygame.sprite.Group()
 
 # Crear instancia del jugador
 jugador = Jugador()
@@ -1084,6 +1194,14 @@ def crear_enemigos(n):
 
 # Crear los primeros enemigos
 crear_enemigos(10)
+
+# Crear obstáculos
+obstaculo1 = Obstaculo(300, 200, 100, 100)
+obstaculo2 = Obstaculo(500, 400, 100, 100)
+todos_los_sprites.add(obstaculo1)
+todos_los_sprites.add(obstaculo2)
+obstaculos.add(obstaculo1)
+obstaculos.add(obstaculo2)
 
 # Función para mostrar la pantalla de inicio
 def pantalla_inicio():
@@ -1106,6 +1224,7 @@ def pantalla_inicio():
 # Función para mostrar la pantalla de fin
 def pantalla_fin():
     fin = True
+    guardar_alta_puntuacion(jugador.puntuacion)
     while fin:
         for evento in pygame.event.get():
             if evento.type == pygame.QUIT:
@@ -1118,6 +1237,7 @@ def pantalla_fin():
         VENTANA.fill(BLANCO)
         mensaje_fin = fuente.render("Game Over - Pulsa ENTER para reiniciar", True, NEGRO)
         VENTANA.blit(mensaje_fin, (ANCHO // 2 - mensaje_fin.get_width() // 2, ALTO // 2 - mensaje_fin.get_height() // 2))
+        mostrar_altas_puntuaciones()
         pygame.display.flip()
         reloj.tick(FPS)
 
@@ -1126,6 +1246,7 @@ pantalla_inicio()
 
 # Variables del juego
 nivel = 1
+mapa = Mapa(nivel)
 oleada = 1
 enemigos_por_oleada = 10
 jefe_activo = False
@@ -1198,7 +1319,7 @@ while ejecutando:
     for colision in colisiones_enemigos:
         jugador.puntuacion += 10
         if random.random() < 0.1:  # 10% de probabilidad de que aparezca un potenciador
-            tipo_potenciador = random.choice(['speed', 'live'])
+            tipo_potenciador = random.choice(['speed', 'live', 'multishot', 'explosive'])
             potenciador = Potenciador(colision.rect.x, colision.rect.y, tipo_potenciador)
             todos_los_sprites.add(potenciador)
             potenciadores.add(potenciador)
