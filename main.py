@@ -882,7 +882,7 @@ pygame.init()
 
 # Definir dimensiones de la ventana del juego
 ANCHO = 800
-ALTO = 600
+ALTO = 600 #640 para cuadrar tamaño sprites tiles mapa
 VENTANA = pygame.display.set_mode((ANCHO, ALTO))
 pygame.display.set_caption("Journey of the Prairie King")
 
@@ -941,7 +941,8 @@ sprites = {
     'tile_dirt': obtener_sprite(spritesheet, 399, 0, 16, 16),
     'tile_water': obtener_sprite(spritesheet, 463, 0, 16, 16),
     'tile_sand': obtener_sprite(spritesheet, 399, 32, 16, 16),
-    'obstacle': obtener_sprite(spritesheet, 447, 0, 16, 16)
+    'obstacle_log': obtener_sprite(spritesheet, 447, 0, 16, 16),
+    'obstacle_bush': obtener_sprite(spritesheet, 431, 0, 16, 16)
 }
 
 # Función para guardar altas puntuaciones
@@ -969,7 +970,7 @@ def mostrar_altas_puntuaciones():
         puntuaciones = []
 
     VENTANA.fill(BLANCO)
-    titulo = fuente.render("Altas Puntuaciones", True, NEGRO)
+    titulo = fuente.render("Registro Puntuaciones", True, NEGRO)
     VENTANA.blit(titulo, (ANCHO // 2 - titulo.get_width() // 2, 50))
     for i, puntuacion in enumerate(puntuaciones):
         texto = fuente.render(f"{i + 1}. {puntuacion}", True, NEGRO)
@@ -992,6 +993,7 @@ class Jugador(pygame.sprite.Sprite):
         self.potenciador_activo = False
         self.potenciador_tiempo = 0
         self.multishot_activo = False
+        self.tiempo_disparo = pygame.time.get_ticks()
 
     def update(self):
         keys = pygame.key.get_pressed()
@@ -1021,8 +1023,21 @@ class Jugador(pygame.sprite.Sprite):
 
         # Verificar tiempo del potenciador
         if self.potenciador_activo and pygame.time.get_ticks() - self.potenciador_tiempo > 5000:  # 5 segundos de duración
-            self.velocidad //= 2
+            if potenciador.tipo == 'speed':
+                self.velocidad //= 2
+            if potenciador.tipo == 'multishot':
+                self.multishot_activo = False
             self.potenciador_activo = False
+        
+        if self.multishot_activo:
+            tiempo_actual = pygame.time.get_ticks()
+            if tiempo_actual - self.tiempo_disparo > 200:  # Controlar la cadencia de disparo
+                self.tiempo_disparo = tiempo_actual
+                for direccion in ['up', 'left', 'right', 'down']:
+                    bala = Bala(self.rect.centerx, self.rect.top, direccion)
+                    todos_los_sprites.add(bala)
+                    balas.add(bala)
+                sonido_disparo.play()
 
 class Enemigo(pygame.sprite.Sprite):
     def __init__(self, tipo):
@@ -1066,9 +1081,12 @@ class Jefe(pygame.sprite.Sprite):
         self.contador_animacion = 0
 
     def update(self):
-        self.rect.y += self.velocidad_y
+        """self.rect.y += self.velocidad_y
         if self.rect.y > ALTO // 2 - self.rect.height // 2:
-            self.velocidad_y = 0  # El jefe se detiene en el centro de la pantalla
+            self.velocidad_y = 0 """ # El jefe se detiene en el centro de la pantalla
+        self.rect.y += self.velocidad_y
+        if self.rect.top > ALTO:
+            self.rect.center = (ANCHO // 2, 100)
 
         # Animación si hay más de un sprite
         if len(self.sprites) > 1:
@@ -1111,13 +1129,22 @@ class Potenciador(pygame.sprite.Sprite):
     def update(self):
         pass
 
-class Obstaculo(pygame.sprite.Sprite):
-    def __init__(self, x, y, ancho, alto):
+"""class Obstaculo(pygame.sprite.Sprite):
+    def __init__(self, x, y, ancho, alto, tipo):
         super().__init__()
         self.image = pygame.Surface((ancho, alto), pygame.SRCALPHA)
         self.rect = self.image.get_rect()
         self.rect.topleft = (x, y)
-        self.image.blit(sprites['obstacle'], (0, 0))
+        self.image.blit(sprites[f'obstacle_{tipo}'], (0, 0))"""
+
+class Obstacle(pygame.sprite.Sprite):
+    def __init__(self, x, y, tipo):
+        super().__init__()
+        self.image = sprites[f'obstacle_{tipo}']
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+        
 class Mapa:
     def __init__(self, nivel):
         self.tiles = []
@@ -1126,50 +1153,88 @@ class Mapa:
     def cargar_mapa(self, nivel):
         niveles = {
             1: [
-                "gggggggggggggggggggg",
-                "gddddggggddddddggggg",
-                "gddddggggddddddggggg",
-                "gggggggggggggggggggg",
-                "ggggggwwgggggggggggg",
-                "ggggggwwgggggggggggg",
-                "gggggggggggggggggggg",
-                "gggggggggggggggggggg",
-                "gggggssswwssssssgggg",
-                "gggggssswwssssssgggg"
+                "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG",
+                "GGGGGGGGGGGGGGGGGGGGGGGGDGGGGGGGGGGGGGGGGGGGGGGGGG",
+                "GGGGGGGGGGGGGGDGGGGGGGGGGGGGGGGGDGGGDGGGGGGGGGGGGG",
+                "GGGGGGGGOGGGGGGGGGGGGGGGGGGGGGGGDGGGGGGGGGGGGGGGGG",
+                "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGDGGDGGGGGGDGGGGGGGG",
+                "GGGGGGGGGGGGGGGGGGGGGGGGDGGGGGGGGGGGGGGGGGGGGGGGGG",
+                "GGGGGGGGGGGGGGGGGGGGGGGGDGGGGGGGGGGGGGGGGGGGGGGGGG",
+                "GGGGGGGGGGGGGGGGGGGGGGGGDGGGGGGGGGGGGGGGGGGGGGGGGG",
+                "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGDDGGGGGGG",
+                "GGGGGGGOGGGGGGGGGGGGGGGGGGGGGGGGGGGGGBGGGGGGGGGGGG",
+                "GGGGGGGGGGGGGGDGGGGGGGGGGGGGGGGGDGGGDGGGGGGGGGGGGG",
+                "GGGGGGGGGDGGGGGGGGGGGGGGGGGGGGGGDGGGGGGGGGGGGGGGGG",
+                "GGGGGGGGGGGGGGGGGGGGGGGGDGGGGGGGGGGGGGGGGGGGGGGGGG",
+                "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGDGGDGGGGGGDGGGGGGGG",
+                "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGOGGGGGGGGG",
+                "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG",
+                "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG",
+                "GGGGGGGBGGGGGGGDGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG",
+                "GGGGGGGGDGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG",
+                "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGDGGGGGGGGGG",
+                "GGGGGGGGGGGGGGGGGGGGOGGGDGGGGGGGGGGGGGGGGGGGGGGGGG",
+                "GGGGGGGGGGGGGGDGGGGGGGGGDGGGGGGGGGGGGGGDGGGGGGGGGG",
+                "GGGGGGGGDGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG",
+                "GGGGGGGGGGGGGGGGGGGGGGGGDGGGGGGGGGGGGGGGGGGGGGGGGG",
+                "GGGGGGGGGGGGGGDGGGGGGGGGGGGGGGGGDGGGDGGGGGGGGGGGGG",
+                "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGDGGDGGGGGGGDGGGGGGGG",
+                "GGGGGGGGGGGGGGBGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG",
+                "GGGGGGGGGGGGGGGGGGGGGGGGDGGGGGGGGGGGGGGGGGGGGGGGGG",
+                "GGGGGGGGGGGGGGDGGGGGGGGGGGGGGGGGGGGGGDGGGGGGGGGGGG",
+                "GGGGGGGGGGGGGGDGGGGGGGGGGGGGGGGGDGGGDGGGGGGGGGGGGG",
+                "GGGGGGGGGGGGGGGGGGGGGGGGGGGOGGGGDGGGGGGGGGGGGGGGGG",
+                "GGGGGGGGGGGGGGGGGGGGGGGGDGGGGGGGGGGGGGGGGGGGGGGGGG",
+                "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGDGGDGGGGGGDGGGGGGGG",
+                "GGGGGGGGGGGGGGGGGGGGGGGGDGGGGGGGGGGGGGGGGGGGGGGGGG",
+                "GGGGGGGGGDGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG",
+                "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG",
+                "GGGGGGGGGGGGOGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG",
+                "GGGGGGGGGGGGGGDGGGGGGGGGDGGGGGGGGDGGGGGGGGGGGGGGGG",
+                "GGGGGGGGGGGGGGGGGGGGGGGGDGGGGGGGGGGGGGGGGGGDGGGGGG",
+                "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG",
             ],
             2: [
-                "ssssssggggssssswwwww",
-                "ssssssggggssssswwwww",
-                "ssssssggggssssswwwww",
-                "wwwwwwggggwwwwwwwwww",
-                "wwwwwwggggwwwwwwwwww",
-                "gggggggggggggggggggg",
-                "gggggggggggggggggggg",
-                "ddddddggggdddddddddd",
-                "ddddddggggdddddddddd",
-                "ddddddggggdddddddddd"
+                "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW",
+                "W.............D...............W",
+                "W.......O.....................W",
+                "W...........WWW...............W",
+                "W.............W...............W",
+                "W.....O.......................W",
+                "W.............................W",
+                "W.......D.....................W",
+                "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW",
             ]
         }
-
-        mapa_nivel = niveles[nivel]
-        for fila in mapa_nivel:
-            fila_tiles = []
-            for tile in fila:
-                if tile == "g":
-                    fila_tiles.append(sprites['tile_grass'])
-                elif tile == "d":
-                    fila_tiles.append(sprites['tile_dirt'])
-                elif tile == "w":
-                    fila_tiles.append(sprites['tile_water'])
-                elif tile == "s":
-                    fila_tiles.append(sprites['tile_sand'])
-            self.tiles.append(fila_tiles)
-
-    def dibujar(self):
-        for y, fila in enumerate(self.tiles):
+        mapa = niveles[nivel]
+        self.tiles = []
+        for y, fila in enumerate(mapa):
             for x, tile in enumerate(fila):
-                VENTANA.blit(tile, (x * 32, y * 32))
+                if tile == "G":
+                    self.tiles.append((sprites['tile_grass'], x * 16, y * 16))
+                elif tile == "D":
+                    self.tiles.append((sprites['tile_dirt'], x * 16, y * 16))
+                elif tile == "W":
+                    self.tiles.append((sprites['tile_water'], x * 16, y * 16))
+                elif tile == "O":
+                    self.tiles.append((sprites['obstacle_log'], x * 16, y * 16))
+                elif tile == "B":
+                    self.tiles.append((sprites['obstacle_bush'], x * 16, y * 16))
+                    
+    def dibujar(self):
+        for tile, x, y in self.tiles:
+            VENTANA.blit(tile, (x, y))
 
+
+# Función para crear enemigos
+def crear_enemigos(n):
+    for _ in range(n):
+        tipo = random.choice(['basic', 'fast', 'strong'])
+        enemigo = Enemigo(tipo)
+        todos_los_sprites.add(enemigo)
+        enemigos.add(enemigo)
+        
+        
 # Crear grupos de sprites
 todos_los_sprites = pygame.sprite.Group()
 enemigos = pygame.sprite.Group()
@@ -1184,24 +1249,33 @@ todos_los_sprites.add(jugador)
 jefe = Jefe()
 todos_los_sprites.add(jefe)
 
-# Función para crear enemigos
-def crear_enemigos(n):
-    for _ in range(n):
-        tipo = random.choice(['basic', 'fast', 'strong'])
-        enemigo = Enemigo(tipo)
-        todos_los_sprites.add(enemigo)
-        enemigos.add(enemigo)
-
 # Crear los primeros enemigos
 crear_enemigos(10)
 
 # Crear obstáculos
-obstaculo1 = Obstaculo(300, 200, 100, 100)
-obstaculo2 = Obstaculo(500, 400, 100, 100)
+obstaculo1 = Obstaculo(128, 64, 100, 100, 'log')
+obstaculo2 = Obstaculo(112, 160, 100, 100, 'log')
+obstaculo3 = Obstaculo(624, 240, 100, 100, 'log')
+obstaculo4 = Obstaculo(160, 336, 100, 100, 'log')
+obstaculo5 = Obstaculo(256, 496, 100, 100, 'log')
+obstaculo6 = Obstaculo(192, 200, 100, 100, 'log')
+obstaculo7 = Obstaculo(500, 400, 100, 100, 'bush')
 todos_los_sprites.add(obstaculo1)
 todos_los_sprites.add(obstaculo2)
+todos_los_sprites.add(obstaculo3)
+todos_los_sprites.add(obstaculo4)
+todos_los_sprites.add(obstaculo5)
+todos_los_sprites.add(obstaculo6)
 obstaculos.add(obstaculo1)
 obstaculos.add(obstaculo2)
+obstaculos.add(obstaculo3)
+obstaculos.add(obstaculo4)
+obstaculos.add(obstaculo5)
+obstaculos.add(obstaculo6)
+
+# Crear mapas de niveles
+nivel = 1
+mapa = Mapa(nivel)
 
 # Función para mostrar la pantalla de inicio
 def pantalla_inicio():
@@ -1238,15 +1312,14 @@ def pantalla_fin():
         mensaje_fin = fuente.render("Game Over - Pulsa ENTER para reiniciar", True, NEGRO)
         VENTANA.blit(mensaje_fin, (ANCHO // 2 - mensaje_fin.get_width() // 2, ALTO // 2 - mensaje_fin.get_height() // 2))
         mostrar_altas_puntuaciones()
-        pygame.display.flip()
+        #pygame.display.flip()
+        pygame.display.update()
         reloj.tick(FPS)
 
 # Mostrar la pantalla de inicio
 pantalla_inicio()
 
 # Variables del juego
-nivel = 1
-mapa = Mapa(nivel)
 oleada = 1
 enemigos_por_oleada = 10
 jefe_activo = False
@@ -1314,17 +1387,19 @@ while ejecutando:
     # Actualizar
     todos_los_sprites.update()
 
-    # Comprobar colisiones
+    # Colisiones entre balas y enemigos
     colisiones_enemigos = pygame.sprite.groupcollide(enemigos, balas, True, True)
     for colision in colisiones_enemigos:
         jugador.puntuacion += 10
         if random.random() < 0.1:  # 10% de probabilidad de que aparezca un potenciador
             tipo_potenciador = random.choice(['speed', 'live', 'multishot', 'explosive'])
-            potenciador = Potenciador(colision.rect.x, colision.rect.y, tipo_potenciador)
+            potenciador = Potenciador(colision.rect.centerx, colision.rect.centery, tipo_potenciador)
+            #potenciador = Potenciador(colision.rect.x, colision.rect.y, tipo_potenciador)
             todos_los_sprites.add(potenciador)
             potenciadores.add(potenciador)
         sonido_golpe.play()
 
+    # Colisiones entre jugador y enemigos
     colisiones_boss = pygame.sprite.spritecollide(jefe, balas, True, pygame.sprite.collide_mask)
     for colision in colisiones_boss:
         jefe.vida -= 1
@@ -1336,7 +1411,7 @@ while ejecutando:
             break
 
     #COLISIÓN DEL JUGADOR CON LOS ENEMIGOS
-    if pygame.sprite.spritecollideany(jugador, enemigos):
+    """if pygame.sprite.spritecollideany(jugador, enemigos):
         jugador.vidas -= 1
         if jugador.vidas <= 0:
             sonido_game_over.play()
@@ -1344,7 +1419,36 @@ while ejecutando:
         else:
             for enemigo in enemigos:
                 enemigo.kill()
+            crear_enemigos(enemigos_por_oleada)"""
+            
+    if pygame.sprite.spritecollide(jugador, enemigos, True):
+        jugador.vidas -= 1
+        if jugador.vidas == 0:
+            sonido_game_over.play()
+            pantalla_fin()
+            jugador.vidas = 3
+            jugador.puntuacion = 0
+            todos_los_sprites.empty()
+            enemigos.empty()
+            balas.empty()
+            potenciadores.empty()
+            obstaculos.empty()
+            jugador = Jugador()
+            todos_los_sprites.add(jugador)
+            todos_los_sprites.add(obstaculo1)
+            todos_los_sprites.add(obstaculo2)
+            todos_los_sprites.add(obstaculo3)
+            todos_los_sprites.add(obstaculo4)
+            todos_los_sprites.add(obstaculo5)
+            todos_los_sprites.add(obstaculo6)
+            obstaculos.add(obstaculo1)
+            obstaculos.add(obstaculo2)
+            obstaculos.add(obstaculo3)
+            obstaculos.add(obstaculo4)
+            obstaculos.add(obstaculo5)
+            obstaculos.add(obstaculo6)
             crear_enemigos(enemigos_por_oleada)
+            jefe_aparecido = False
 
     #EFECTOS DISTINTOS POTENCIADORES AL COLISIONAR EL JUGADOR CON ELLOS
     colisiones_potenciadores = pygame.sprite.spritecollide(jugador, potenciadores, True)
@@ -1356,6 +1460,16 @@ while ejecutando:
             jugador.potenciador_tiempo = pygame.time.get_ticks()
         elif colision.tipo == 'live':
             jugador.vidas += 1
+        elif colision.tipo == 'multishot':
+            jugador.multishot_activo = True
+            jugador.potenciador_activo = True
+            jugador.potenciador_tiempo = pygame.time.get_ticks()
+        elif colision.tipo == 'explosive':
+            jugador.puntuacion += len(enemigos) * 10
+            for enemigo in enemigos:
+                enemigo.kill()
+            crear_enemigos(enemigos_por_oleada)
+            
 
     # Subir de nivel cada 3 oleadas
     if not enemigos and not jefe_activo:
@@ -1370,6 +1484,7 @@ while ejecutando:
 
     # Dibujar / renderizar
     VENTANA.fill(BLANCO)
+    mapa.dibujar()
     todos_los_sprites.draw(VENTANA)
 
     # Dibujar la puntuación, nivel y vidas
@@ -1387,7 +1502,8 @@ while ejecutando:
         VENTANA.blit(texto_potenciador, (10, 100))
 
     # Después de dibujar todo, actualizar la pantalla
-    pygame.display.flip()
+    #pygame.display.flip()
+    pygame.display.update()
 
     # Controlar los FPS
     reloj.tick(FPS)
