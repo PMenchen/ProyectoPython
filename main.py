@@ -3,13 +3,14 @@ import random
 import os
 import json
 import math
+import threading
 
 # Inicializar Pygame
 pygame.init()
 
 # Definir dimensiones de la ventana del juego
 ANCHO = 800
-ALTO = 600 #640 para cuadrar tamaño sprites tiles mapa
+ALTO = 640 #640 para cuadrar tamaño sprites tiles mapa
 VENTANA = pygame.display.set_mode((ANCHO, ALTO))
 pygame.display.set_caption("Journey of the Prairie King")
 
@@ -358,8 +359,8 @@ class Potenciador(pygame.sprite.Sprite):
                 jugador.puntuacion += len(enemigos) * 10
                 for enemigo in enemigos:
                     enemigo.kill()
-                pygame.time.wait(2000)
-                crear_enemigos(enemigos_por_oleada)
+                if not jefe_activo:
+                    crear_enemigos(enemigos_por_oleada)
             self.kill()
 
 class Obstacle(pygame.sprite.Sprite):
@@ -637,7 +638,6 @@ while ejecutando:
             enemigos.empty()
             balas.empty()
             potenciadores.empty()
-            #obstaculos.empty()
             jugador = Jugador()
             todos_los_sprites.add(jugador)
             mapa = Mapa(1)
@@ -650,9 +650,9 @@ while ejecutando:
             jefe = Jefe()
             todos_los_sprites.add(jefe)
             jefe_activo = True
+            crear_enemigos(10)
         else:
             oleada += 1
-            pygame.time.wait(2000)
             crear_enemigos(enemigos_por_oleada)
             enemigos_por_oleada += 2
 
