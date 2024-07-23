@@ -342,8 +342,9 @@ class Potenciador(pygame.sprite.Sprite):
     def update(self):
         if pygame.sprite.collide_rect(self, jugador):
             if self.tipo == 'speed':
-                jugador.velocidad *= 2
-                jugador.speed_potenciador_activo = True
+                if jugador.speed_potenciador_activo == False:
+                    jugador.velocidad *= 2
+                    jugador.speed_potenciador_activo = True
                 jugador.speed_potenciador_tiempo = pygame.time.get_ticks()
                 sonido_potenciador.play()
             elif self.tipo == 'live':
@@ -357,6 +358,7 @@ class Potenciador(pygame.sprite.Sprite):
                 jugador.puntuacion += len(enemigos) * 10
                 for enemigo in enemigos:
                     enemigo.kill()
+                pygame.time.wait(2000)
                 crear_enemigos(enemigos_por_oleada)
             self.kill()
 
@@ -421,7 +423,7 @@ class Mapa:
             2: [
                 "SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS",
                 "SSSSSSSSSSSSSSTSSSSSSSSSStSSSSSSSSSSSSSSSSSSSSSSSS",
-                "S.......t...............................t........S",
+                "SSSSSSSStSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSStSSSSSSSSS",
                 "S...........WWW..........................T.......S",
                 "S.............W..................................S",
                 "S.....O.....................tT...................S",
@@ -650,6 +652,7 @@ while ejecutando:
             jefe_activo = True
         else:
             oleada += 1
+            pygame.time.wait(2000)
             crear_enemigos(enemigos_por_oleada)
             enemigos_por_oleada += 2
 
