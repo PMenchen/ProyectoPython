@@ -2,6 +2,7 @@ import pygame
 import random
 import os
 import json
+import math
 
 # Inicializar Pygame
 pygame.init()
@@ -67,6 +68,10 @@ sprites = {
     'tile_dirt': obtener_sprite(spritesheet, 399, 0, 16, 16),
     'tile_water': obtener_sprite(spritesheet, 463, 0, 16, 16),
     'tile_sand': obtener_sprite(spritesheet, 399, 32, 16, 16),
+    'tile_sandstone1': obtener_sprite(spritesheet, 335, 32, 16, 16),
+    'tile_sandstone2': obtener_sprite(spritesheet, 351, 32, 16, 16),
+    'tile_waterD1': obtener_sprite(spritesheet, 463, 32, 16, 16),
+    'tile_waterD2': obtener_sprite(spritesheet, 479, 32, 16, 16),
     'obstacle_log': obtener_sprite(spritesheet, 447, 0, 16, 16),
     'obstacle_bush': obtener_sprite(spritesheet, 431, 0, 16, 16)
 }
@@ -332,15 +337,46 @@ class Mapa:
                 "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG",
             ],
             2: [
-                "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW",
-                "W.............D...............W",
-                "W.......O.....................W",
-                "W...........WWW...............W",
-                "W.............W...............W",
-                "W.....O.......................W",
-                "W.............................W",
-                "W.......D.....................W",
-                "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW",
+                "SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS",
+                "SSSSSSSSSSSSSSTSSSSSSSSSStSSSSSSSSSSSSSSSSSSSSSSSS",
+                "S.......t...............................t........S",
+                "S...........WWW..........................T.......S",
+                "S.............W..................................S",
+                "S.....O.....................tT...................S",
+                "S................................................S",
+                "S.......S........................................S",
+                "S.......S........................................S",
+                "S.......S........................................S",
+                "S.......S.................................t......S",
+                "S..T....S........................................S",
+                "S.......S..........T.............................S",
+                "S.......S...........t.......................t....S",
+                "S.......S....................................t...S",
+                "S.......S........................................S",
+                "S.......S........................................S",
+                "S.......S........................................S",
+                "S.......S........................................S",
+                "S.......S........................................S",
+                "S.......S................T.......................S",
+                "S.......S........................................S",
+                "S.......S........................................S",
+                "S.......S........................................S",
+                "S.......S........................................S",
+                "S.......S.T......................................S",
+                "S.......S................................t.......S",
+                "S.......S...............................tSt......S",
+                "S.......S........................................S",
+                "S.......S................tTt.....................S",
+                "S.......S........................................S",
+                "S.......S........................................S",
+                "S.......S........................................S",
+                "S.......S........................................S",
+                "S.......S........................................S",
+                "S.......S........TT..............................S",
+                "S.......S........tt..............................S",
+                "S.......S..................................T.....S",
+                "S.......S........................................S",
+                "SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS",
             ]
         }
         mapa = niveles[nivel]
@@ -354,6 +390,12 @@ class Mapa:
                     self.tiles.append((sprites['tile_dirt'], x * 16, y * 16))
                 elif tile == "W":
                     self.tiles.append((sprites['tile_water'], x * 16, y * 16))
+                elif tile == "S":
+                    self.tiles.append((sprites['tile_sand'], x * 16, y * 16))
+                elif tile == "T":
+                    self.tiles.append((sprites['tile_sandstone1'], x * 16, y * 16))
+                elif tile == "t":
+                    self.tiles.append((sprites['tile_sandstone2'], x * 16, y * 16))
                 elif tile == "O":
                     obstaculoL = Obstacle(x*16, y*16, 'log')
                     self.obstaculos.add(obstaculoL)
