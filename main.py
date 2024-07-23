@@ -121,9 +121,10 @@ class Jugador(pygame.sprite.Sprite):
         self.vidas = 3
         self.animacion = 0
         self.contador_animacion = 0
-        self.potenciador_activo = False
-        self.potenciador_tiempo = 0
+        self.speed_potenciador_activo = False
+        self.speed_potenciador_tiempo = 0
         self.multishot_activo = False
+        self.multishot_potenciador_tiempo = 0
         self.tiempo_disparo = pygame.time.get_ticks()
 
     def update(self):
@@ -158,33 +159,27 @@ class Jugador(pygame.sprite.Sprite):
             self.animacion = (self.animacion + 1) % len(self.sprites)
             self.image = self.sprites[self.animacion]
 
-        # Verificar tiempo del potenciador
-        if self.potenciador_activo and pygame.time.get_ticks() - self.potenciador_tiempo > 5000:  # 5 segundos de duración
-            if potenciador.tipo == 'speed':
-                self.velocidad //= 2
-                self.potenciador_activo = False
-            if potenciador.tipo == 'multishot':
-                self.multishot_activo = False
-                self.potenciador_activo = False
+        # Verificar tiempo del potenciador de velocidad
+        if self.speed_potenciador_activo and pygame.time.get_ticks() - self.speed_potenciador_tiempo > 5000:  # 5 segundos de duración
+            self.velocidad //= 2
+            self.speed_potenciador_activo = False
         
-        """if self.multishot_activo:
-            tiempo_actual = pygame.time.get_ticks()
-            if tiempo_actual - self.tiempo_disparo > 200:  # Controlar la cadencia de disparo
-                self.tiempo_disparo = tiempo_actual
-                for direccion in ['up', 'left', 'right', 'down']:
-                    bala = Bala(self.rect.centerx, self.rect.top, direccion)
-                    todos_los_sprites.add(bala)
-                    balas.add(bala)
-                sonido_disparo.play()"""
+        # Verificar tiempo del potenciador de multishot
+        if self.multishot_activo and pygame.time.get_ticks() - self.multishot_potenciador_tiempo > 5000:  # 5 segundos de duración
+            self.multishot_activo = False
+            
+            
         if self.multishot_activo:
             tiempo_actual = pygame.time.get_ticks()
-            if tiempo_actual - self.tiempo_disparo > 200:  # Controlar la cadencia de disparo
+            if tiempo_actual - self.tiempo_disparo > 150:  # Controlar la cadencia de disparo
                 self.tiempo_disparo = tiempo_actual
                 self.disparar_multiple()
 
     def disparar(self):
         if not self.multishot_activo:
-            balas.add(Bala(self.rect.centerx, self.rect.top))
+            bala = Bala(self.rect.centerx, self.rect.top)
+            todos_los_sprites.add(bala)
+            balas.add(bala)
             sonido_disparo.play()
         else:
             self.disparar_multiple()
@@ -194,9 +189,14 @@ class Jugador(pygame.sprite.Sprite):
             bala = Bala(self.rect.centerx, self.rect.top, direccion)
             todos_los_sprites.add(bala)
             balas.add(bala)
-            """balas.add(Bala(self.rect.centerx - 5, self.rect.top))
-            balas.add(Bala(self.rect.centerx + 5, self.rect.top))"""
         sonido_disparo.play()
+    """def disparar_multiple(self):
+        for angulo in [-15, 0, 15]:
+            rad = math.radians(angulo)
+            bala = Bala(self.rect.centerx + int(10 * math.cos(rad)), self.rect.top + int(10 * math.sin(rad)))
+            todos_los_sprites.add(bala)
+            balas.add(bala)
+            sonido_disparo.play()"""
 
 class Enemigo(pygame.sprite.Sprite):
     def __init__(self, tipo):
@@ -217,21 +217,7 @@ class Enemigo(pygame.sprite.Sprite):
         #self.velocidad_x = random.choice([-2, 2]) if tipo == 'strong' else 0
         self.animacion = 0
         self.contador_animacion = 0
-
-    """def update(self):
-        self.rect.y += self.velocidad
-        if pygame.sprite.spritecollide(self, mapa.obstaculos, False):
-            self.rect.y -= self.velocidad
-        
-        if self.rect.top > ALTO:
-            self.rect.x = random.randint(0, ANCHO - self.rect.width)
-            self.rect.y = random.randint(-100, -40)
-
-        self.contador_animacion += 1
-        if self.contador_animacion >= 10:
-            self.contador_animacion = 0
-            self.animacion = (self.animacion + 1) % len(self.sprites)
-            self.image = self.sprites[self.animacion]"""
+            
     def update(self):
         # Calcular la dirección hacia el jugador
         dx = jugador.rect.x - self.rect.x
@@ -357,18 +343,17 @@ class Potenciador(pygame.sprite.Sprite):
         if pygame.sprite.collide_rect(self, jugador):
             if self.tipo == 'speed':
                 jugador.velocidad *= 2
-                jugador.potenciador_activo = True
-                jugador.potenciador_tiempo = pygame.time.get_ticks()
+                jugador.speed_potenciador_activo = True
+                jugador.speed_potenciador_tiempo = pygame.time.get_ticks()
                 sonido_potenciador.play()
             elif self.tipo == 'live':
                 jugador.vidas += 1
                 sonido_potenciador.play()
             elif self.tipo == 'multishot':
                 jugador.multishot_activo = True
-                jugador.potenciador_activo = True
-                jugador.potenciador_tiempo = pygame.time.get_ticks()
+                jugador.multishot_potenciador_tiempo = pygame.time.get_ticks()
                 sonido_potenciador.play()
-            elif colision.tipo == 'explosive':
+            elif self.tipo == 'explosive':
                 jugador.puntuacion += len(enemigos) * 10
                 for enemigo in enemigos:
                     enemigo.kill()
@@ -657,27 +642,6 @@ while ejecutando:
             crear_enemigos(enemigos_por_oleada)
             jefe_activos = False
 
-    #EFECTOS DISTINTOS POTENCIADORES AL COLISIONAR EL JUGADOR CON ELLOS
-    colisiones_potenciadores = pygame.sprite.spritecollide(jugador, potenciadores, True)
-    for colision in colisiones_potenciadores:
-        sonido_potenciador.play()
-        if colision.tipo == 'speed':
-            jugador.velocidad *= 2
-            jugador.potenciador_activo = True
-            jugador.potenciador_tiempo = pygame.time.get_ticks()
-        elif colision.tipo == 'live':
-            jugador.vidas += 1
-        elif colision.tipo == 'multishot':
-            jugador.multishot_activo = True
-            jugador.potenciador_activo = True
-            jugador.potenciador_tiempo = pygame.time.get_ticks()
-        elif colision.tipo == 'explosive':
-            jugador.puntuacion += len(enemigos) * 10
-            for enemigo in enemigos:
-                enemigo.kill()
-            crear_enemigos(enemigos_por_oleada)
-            
-
     # Subir de nivel cada 3 oleadas
     if not enemigos and not jefe_activo:
         if oleada % 3 == 0:
@@ -701,12 +665,6 @@ while ejecutando:
     VENTANA.blit(texto_nivel, (10, 40))
     texto_vidas = fuente.render(f'Vidas: {jugador.vidas}', True, NEGRO)
     VENTANA.blit(texto_vidas, (10, 70))
-
-    # Dibujar tiempo restante del potenciador si está activo
-    if jugador.potenciador_activo:
-        tiempo_restante = 5 - (pygame.time.get_ticks() - jugador.potenciador_tiempo) // 1000
-        texto_potenciador = fuente.render(f'Tiempo Potenciador: {tiempo_restante}', True, NEGRO)
-        VENTANA.blit(texto_potenciador, (10, 100))
 
     # Después de dibujar todo, actualizar la pantalla
     #pygame.display.flip()
