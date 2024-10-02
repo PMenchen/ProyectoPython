@@ -38,6 +38,8 @@ sonido_golpe = pygame.mixer.Sound('audio/hit.wav')
 sonido_potenciador = pygame.mixer.Sound('audio/powerup.wav')
 sonido_game_over = pygame.mixer.Sound('audio/game_over.wav')
 
+sonido_disparo.set_volume(0.5)
+
 # Función para cargar la spritesheet
 def cargar_spritesheet(archivo):
     hoja = pygame.image.load(archivo).convert_alpha()
